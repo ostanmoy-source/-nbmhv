@@ -426,13 +426,22 @@ defaults = {
     "username": "",
     "page": "home",
     "selected_bot": None,
-    "upload_speakers": None,   # dict of {name: [lines]} after parsing
+    "upload_speakers": None,
     "upload_raw": None,
     "upload_filename": None,
 }
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ── Restore session from query param (survives page refresh) ──
+if not st.session_state.logged_in:
+    qp_user = st.query_params.get("user", "")
+    if qp_user:
+        st.session_state.logged_in = True
+        st.session_state.username = qp_user
+        if st.session_state.page == "home":
+            st.session_state.page = "chat"
 
 
 # ─────────────────────────────────────────────────────────
@@ -486,6 +495,8 @@ with st.sidebar:
                     st.session_state.logged_in = True
                     st.session_state.username = u
                     st.session_state.page = "chat"
+                    # persist login in browser via query param
+                    st.query_params["user"] = u
                     st.rerun()
                 else:
                     st.error("Wrong credentials.")
@@ -514,6 +525,7 @@ with st.sidebar:
         """, unsafe_allow_html=True)
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         if st.button("Sign out", key="logout_btn", use_container_width=True):
+            st.query_params.clear()
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
@@ -694,20 +706,25 @@ elif st.session_state.page == "chat":
 <html><head><meta charset="utf-8">
 <style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-body {{
+html, body {{
+  height: 460px;
+  max-height: 460px;
   background: #08080f;
   font-family: -apple-system, 'Segoe UI', sans-serif;
-  padding: 14px 12px;
-  height: 100vh;
+  overflow: hidden;
+}}
+.chat-box {{
+  height: 460px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  gap: 6px;
+  padding: 14px 12px 10px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a45 transparent;
 }}
-.chat-box {{
-  display: flex; flex-direction: column; gap: 6px;
-  width: 100%;
-}}
+.chat-box::-webkit-scrollbar {{ width: 5px; }}
+.chat-box::-webkit-scrollbar-thumb {{ background: #2a2a45; border-radius: 10px; }}
 .row {{ display: flex; }}
 .row.user {{ justify-content: flex-end; }}
 .row.bot  {{ justify-content: flex-start; }}
@@ -780,16 +797,16 @@ function renderChat() {{
     row.appendChild(dots);
     box.appendChild(row);
   }}
-  window.scrollTo(0, document.body.scrollHeight);
-  setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 80);
-  setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 300);
-}
+  box.scrollTop = box.scrollHeight;
+  requestAnimationFrame(() => {{ box.scrollTop = box.scrollHeight; }});
+  setTimeout(() => {{ box.scrollTop = box.scrollHeight; }}, 100);
+}}
 renderChat();
 </script>
 </body></html>"""
 
         from streamlit.components.v1 import html as components_html
-        components_html(iframe_html, height=520, scrolling=False)
+        components_html(iframe_html, height=460, scrolling=False)
 
         # input bar
         if st.session_state.get("pending_clear"):
@@ -839,7 +856,7 @@ renderChat();
                     reply = getattr(resp, "text", None) or "⚠️ Empty response."
                 except Exception:
                     try:
-                        resp = genai_client.models.generate_content(model="gemini-2.5-flash-preview-04-17", contents=prompt)
+                        resp = genai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
                         reply = getattr(resp, "text", None) or "⚠️ Empty response."
                     except Exception as e:
                         reply = f"⚠️ Offline — {e}"
