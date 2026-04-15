@@ -139,7 +139,7 @@ def generate_persona(text_examples):
         return ""
     prompt = f"Write a 1-sentence persona from these messages capturing tone and slang:\n{text_examples}\nReturn only the sentence."
     try:
-        resp = genai_client.models.generate_content(model="gemini-2.0-flash-exp", contents=prompt)
+        resp = genai_client.models.generate_content(model="gemini-2.5-flash-exp", contents=prompt)
         return (getattr(resp, "text", None) or "").strip()[:200]
     except:
         return ""
