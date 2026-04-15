@@ -1,0 +1,7 @@
+streamlit
+sentence-transformers
+numpy
+bcrypt
+google-genai
+torch
+supabase
