@@ -338,7 +338,7 @@ Examples:
 Return only the short persona description."""
     try:
         resp = genai_client.models.generate_content(
-            model="gemini-2.5-flash-exp",
+            model="gemini-2.5-flash-preview-04-17",
             contents=prompt,
         )
         text = getattr(resp, "text", None) or ""
@@ -476,11 +476,12 @@ with st.sidebar:
             if not u.strip() or not p.strip():
                 st.error("Fill both fields.")
             elif mode == "Login":
-                try:
-                    ok = login_user(u, p)
-                except Exception as e:
-                    st.error(f"Auth error: {e}")
-                    ok = False
+                with st.spinner("Logging in…"):
+                    try:
+                        ok = login_user(u, p)
+                    except Exception as e:
+                        st.error(f"Auth error: {e}")
+                        ok = False
                 if ok:
                     st.session_state.logged_in = True
                     st.session_state.username = u
@@ -489,11 +490,12 @@ with st.sidebar:
                 else:
                     st.error("Wrong credentials.")
             else:
-                try:
-                    ok = register_user(u, p)
-                except Exception as e:
-                    st.error(f"Register error: {e}")
-                    ok = False
+                with st.spinner("Creating account…"):
+                    try:
+                        ok = register_user(u, p)
+                    except Exception as e:
+                        st.error(f"Register error: {e}")
+                        ok = False
                 if ok:
                     st.success("Registered! Now log in.")
                 else:
@@ -696,10 +698,15 @@ body {{
   background: #08080f;
   font-family: -apple-system, 'Segoe UI', sans-serif;
   padding: 14px 12px;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }}
 .chat-box {{
   display: flex; flex-direction: column; gap: 6px;
-  min-height: 100%;
+  width: 100%;
 }}
 .row {{ display: flex; }}
 .row.user {{ justify-content: flex-end; }}
@@ -773,15 +780,16 @@ function renderChat() {{
     row.appendChild(dots);
     box.appendChild(row);
   }}
-  box.scrollTop = box.scrollHeight;
-  setTimeout(() => box.scrollTop = box.scrollHeight, 60);
-}}
+  window.scrollTo(0, document.body.scrollHeight);
+  setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 80);
+  setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 300);
+}
 renderChat();
 </script>
 </body></html>"""
 
         from streamlit.components.v1 import html as components_html
-        components_html(iframe_html, height=460, scrolling=False)
+        components_html(iframe_html, height=520, scrolling=False)
 
         # input bar
         if st.session_state.get("pending_clear"):
@@ -827,11 +835,11 @@ renderChat();
                 reply = "⚠️ Gemini API key not set."
             else:
                 try:
-                    resp = genai_client.models.generate_content(model="-flash-exp", contents=prompt)
+                    resp = genai_client.models.generate_content(model="gemini-2.5-flash-preview-04-17", contents=prompt)
                     reply = getattr(resp, "text", None) or "⚠️ Empty response."
                 except Exception:
                     try:
-                        resp = genai_client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+                        resp = genai_client.models.generate_content(model="gemini-2.5-flash-preview-04-17", contents=prompt)
                         reply = getattr(resp, "text", None) or "⚠️ Empty response."
                     except Exception as e:
                         reply = f"⚠️ Offline — {e}"
