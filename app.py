@@ -338,7 +338,7 @@ Examples:
 Return only the short persona description."""
     try:
         resp = genai_client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash-exp",
             contents=prompt,
         )
         text = getattr(resp, "text", None) or ""
@@ -827,11 +827,11 @@ renderChat();
                 reply = "⚠️ Gemini API key not set."
             else:
                 try:
-                    resp = genai_client.models.generate_content(model="gemini-2.0-flash-exp", contents=prompt)
+                    resp = genai_client.models.generate_content(model="-flash-exp", contents=prompt)
                     reply = getattr(resp, "text", None) or "⚠️ Empty response."
                 except Exception:
                     try:
-                        resp = genai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+                        resp = genai_client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
                         reply = getattr(resp, "text", None) or "⚠️ Empty response."
                     except Exception as e:
                         reply = f"⚠️ Offline — {e}"
